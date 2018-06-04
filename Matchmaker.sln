@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 15
+VisualStudioVersion = 15.0.27004.2005
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Matchmaker", "Matchmaker\Matchmaker.csproj", "{D26B5868-5634-41DF-8B24-87B89716D535}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MatchmakerEngine", "MatchmakerEngine\MatchmakerEngine.csproj", "{FAD3BD57-3129-4B0A-BF67-B9420A61384C}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{D26B5868-5634-41DF-8B24-87B89716D535}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D26B5868-5634-41DF-8B24-87B89716D535}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D26B5868-5634-41DF-8B24-87B89716D535}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D26B5868-5634-41DF-8B24-87B89716D535}.Release|Any CPU.Build.0 = Release|Any CPU
+		{FAD3BD57-3129-4B0A-BF67-B9420A61384C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FAD3BD57-3129-4B0A-BF67-B9420A61384C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FAD3BD57-3129-4B0A-BF67-B9420A61384C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FAD3BD57-3129-4B0A-BF67-B9420A61384C}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {04CA0422-63F0-445C-9CFD-D74793E7802B}
+	EndGlobalSection
+EndGlobal
