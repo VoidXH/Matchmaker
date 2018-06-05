@@ -10,11 +10,14 @@ namespace Matchmaker {
     public partial class Simulator : Form {
         public float TimeScale = 10;
 
+        public int UpdateInterval = 10;
+
         List<SimulatedPlayer> Playerbase;
         SimulatedQueue Queue;
+        System.Threading.Timer QueueTimer;
         Timer SimulatorTimer;
         float SimulatedTime;
-        string LastEvent;
+        string LastFullEvent, LastEvent;
 
         public Simulator() {
             InitializeComponent();
@@ -29,6 +32,7 @@ namespace Matchmaker {
         }
 
         void RegeneratePlayerbase_Click(object sender, EventArgs e) {
+            StopTimers();
             int PlayerCount = int.Parse(PlayerbaseSize.Text);
             Player.RedistributionCenter = float.Parse(SkillCenter.Text) / 100;
             Playerbase = new List<SimulatedPlayer>(PlayerCount);
@@ -36,7 +40,7 @@ namespace Matchmaker {
                 Playerbase.Add(new SimulatedPlayer());
             Queue = new SimulatedQueue();
             SimulatedTime = 0;
-            LastEvent = string.Empty;
+            LastFullEvent = LastEvent = string.Empty;
             SimulatorPanel.Enabled = true;
             UpdateDistribution();
             Distribution.Visible = true;
@@ -73,35 +77,61 @@ namespace Matchmaker {
         }
 
         void SimulatorTick(object sender, EventArgs e) {
-            float Tick = TimeScale * SimulatorTimer.Interval / 1000;
-            SimulatedTime += Tick;
-            for (int i = 0, c = Playerbase.Count; i < c; ++i)
-                Playerbase[i].QueueSimulation(Queue, Tick);
-            Queue.SimulatorTick(Tick);
-            if (Queue.Result.Length != 0) {
-                LastEvent = Queue.Result.ToString().TrimEnd();
-                Queue.Result = new StringBuilder();
+            if (LastEvent.Length != 0) {
+                LastFullEvent = LastEvent;
+                LastEvent = string.Empty;
                 UpdateDistribution();
             }
             StringBuilder Display = new StringBuilder();
             Display.Append("Simulated time: ").AppendLine(TimeSpan.FromSeconds(SimulatedTime).ToString())
                 .Append("Players in queue: ").AppendLine(Queue.PlayersIn.ToString())
                 .Append("Matches played: ").AppendLine(Queue.MatchesPlayed.ToString())
-                .AppendLine().Append(LastEvent);
+                .AppendLine().Append(LastFullEvent);
             MatchResults.Text = Display.ToString();
+        }
+
+        bool TimerLockFix = false;
+
+        void QueueTick(object x) {
+            lock (x) {
+                if (TimerLockFix)
+                    return;
+                TimerLockFix = true;
+            }
+            float Tick = TimeScale * UpdateInterval / 1000;
+            SimulatedTime += Tick;
+            for (int i = 0, c = Playerbase.Count; i < c; ++i)
+                Playerbase[i].QueueSimulation(Queue, Tick);
+            Queue.SimulatorTick(Tick);
+            lock (Queue.ResultLock) {
+                if (Queue.Result.Length != 0)
+                    LastEvent = Queue.Result.ToString().TrimEnd();
+                Queue.Result = new StringBuilder();
+            }
+            TimerLockFix = false;
         }
 
         void StartSimulation_Click(object sender, EventArgs e) {
             if (StartSimulation.Text == "Start") {
                 StartSimulation.Text = "Pause";
-                SimulatorTimer = new Timer() { Interval = 10 };
+                QueueTimer = new System.Threading.Timer(QueueTick, new object(), 0, UpdateInterval);
+                SimulatorTimer = new Timer() { Interval = UpdateInterval };
                 SimulatorTimer.Tick += SimulatorTick;
                 SimulatorTimer.Start();
             } else {
+                StopTimers();
+            }
+        }
+
+        void StopTimers() {
+            if (SimulatorTimer != null && SimulatorTimer.Enabled) {
                 StartSimulation.Text = "Start";
                 SimulatorTimer.Stop();
                 SimulatorTimer.Dispose();
+                QueueTimer.Dispose();
+                while (TimerLockFix) ;
             }
+            MatchResults.Text = "Press Start!";
         }
 
         void SkillDistributionSlider_Scroll(object sender, EventArgs e) {

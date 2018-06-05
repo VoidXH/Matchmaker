@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
+using System.Threading.Tasks;
 
 namespace Matchmaker {
     public class SimulatedQueue : Queue {
@@ -11,14 +12,15 @@ namespace Matchmaker {
         /// <summary>All output is written here. Clear this when you want, but don't let it eat all your RAM.</summary>
         public StringBuilder Result = new StringBuilder();
 
+        public object ResultLock = new object();
+
         public int MatchesPlayed { get; private set; } = 0;
 
         public SimulatedQueue() {
-            OnMatchMade += SimulateMatch;
+            OnMatchMade += StartMatchSimulation;
         }
 
-        void EvaluatePlayer(SimulatedPlayer SPlayer, float TeamSkill, float OpponentSkill, float Contribution, bool Winner) {
-            SPlayer.Evaluate(TeamSkill, OpponentSkill, Contribution, Winner ? Results.Win : Results.Loss);
+        void LogPlayer(SimulatedPlayer SPlayer, float Contribution, bool Winner) {
             Result.Append(SPlayer.Name).AppendLine(": ");
             int NewSkill = (int)(SPlayer.SkillRating * SkillRange);
             Result.Append(SPlayer.SkillBeforeMatch).Append(" -> ").Append(NewSkill).Append(" (");
@@ -31,28 +33,58 @@ namespace Matchmaker {
             Result.Append("New MMR: ").AppendLine(((int)(SPlayer.MatchmakingRating * SkillRange)).ToString()).AppendLine();
         }
 
+        struct SimulationResult {
+            public SimulatedPlayer SPlayer;
+            public float Contribution;
+        }
+
         /// <summary>Evaluate a match with random winners and contributions.</summary>
         /// <param name="Players">Players found to play by the matchmaker</param>
         void SimulateMatch(List<Player> Players) {
+            const int TeamCount = 2;
             for (int i = 0, c = Players.Count; i < c; ++i)
                 ((SimulatedPlayer)Players[i]).SkillBeforeMatch = (int)(Players[i].SkillRating * SkillRange);
-            List<Player>[] Teams = DistributeTeams(Players, 2);
+            List<Player>[] Teams = DistributeTeams(Players, TeamCount);
             float WinnerSkill = 0, LoserSkill = 0;
-            for (int i = 0; i < PlayersPerTeam; ++i) {
-                WinnerSkill += Teams[0][i].MatchmakingRating; // Team 0 is randomly the winner.
-                LoserSkill += Teams[1][i].MatchmakingRating; // Team 0 is randomly the winner.
-            }
-            Random Rand = new Random((int)DateTime.Now.Ticks);
-            Result.AppendLine("New match --------------------");
+            for (int t = 0; t < TeamCount; ++t)
+                for (int i = 0; i < PlayersPerTeam; ++i)
+                    if (t == 0)
+                        WinnerSkill += Teams[0][i].MatchmakingRating; // Team 0 is randomly the winner.
+                    else
+                        LoserSkill += Teams[t][i].MatchmakingRating;
             WinnerSkill /= PlayersPerTeam;
             LoserSkill /= PlayersPerTeam;
-            for (int i = 0; i < PlayersPerTeam; ++i) {
-                EvaluatePlayer((SimulatedPlayer)Teams[0][i], WinnerSkill, LoserSkill,
-                    Mathf.Clamp01(((SimulatedPlayer)Teams[0][i]).ActualSkill / WinnerSkill * .5f + (float)Rand.NextDouble() * .1f - .05f), true);
-                EvaluatePlayer((SimulatedPlayer)Teams[1][i], LoserSkill, WinnerSkill,
-                    Mathf.Clamp01(((SimulatedPlayer)Teams[1][i]).ActualSkill / LoserSkill * .5f + (float)Rand.NextDouble() * .1f - .05f), false);
+            // Random contribution calculation
+            Random Rand = new Random((int)DateTime.Now.Ticks);
+            SimulationResult[,] STeams = new SimulationResult[2, PlayersPerTeam];
+            for (int t = 0; t < 2; ++t) {
+                float GroupSkill = t == 0 ? WinnerSkill : LoserSkill;
+                for (int i = 0; i < PlayersPerTeam; ++i) {
+                    STeams[t, i].SPlayer = (SimulatedPlayer)Teams[t][i];
+                    STeams[t, i].Contribution = Mathf.Clamp01(STeams[t, i].SPlayer.ActualSkill / GroupSkill * .5f + (float)Rand.NextDouble() * .1f - .05f);
+                }
             }
+            // Simulate
+            for (int t = 0; t < TeamCount; ++t)
+                for (int i = 0; i < PlayersPerTeam; ++i)
+                    STeams[t, i].SPlayer.Evaluate(WinnerSkill, LoserSkill, STeams[t, i].Contribution, Results.Win);
+            // Log
+            lock (ResultLock) {
+                Result.AppendLine("New match --------------------");
+                for (int t = 0; t < TeamCount; ++t)
+                    for (int i = 0; i < PlayersPerTeam; ++i)
+                        LogPlayer(STeams[t, i].SPlayer, STeams[t, i].Contribution, t == 0);
+            }
+            for (int i = 0; i < PlayersPerTeam; ++i)
+                ((SimulatedPlayer)Players[i]).InMatch = false;
             ++MatchesPlayed;
+        }
+
+        void StartMatchSimulation(List<Player> Players) {
+            Task.Run(() => {
+                List<Player> MatchPlayers = Players;
+                SimulateMatch(MatchPlayers);
+            });
         }
 
         public void SimulatorTick(float DeltaTime) {

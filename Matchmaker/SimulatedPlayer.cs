@@ -17,6 +17,8 @@ namespace Matchmaker {
 
         internal int PlacementMatchesRemaining { get; private set; }
 
+        internal bool InMatch = false;
+
         /// <summary>Wait time between matches.</summary>
         float Cooldown;
 
@@ -45,7 +47,7 @@ namespace Matchmaker {
         }
 
         public void QueueSimulation(Queue Line, float DeltaTime) {
-            if (Line.IsInQueue(this))
+            if (InMatch || Line.IsInQueue(this))
                 return;
             if ((Cooldown -= DeltaTime) <= 0) {
                 Line.QueuePlayer(this);
