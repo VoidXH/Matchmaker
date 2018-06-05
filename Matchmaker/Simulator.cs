@@ -8,7 +8,7 @@ using System.Windows.Forms.DataVisualization.Charting;
 
 namespace Matchmaker {
     public partial class Simulator : Form {
-        public float TimeScale = 10;
+        public float TimeScale = 50;
 
         public int UpdateInterval = 10;
 
@@ -17,7 +17,8 @@ namespace Matchmaker {
         System.Threading.Timer QueueTimer;
         Timer SimulatorTimer;
         float SimulatedTime;
-        string LastFullEvent, LastEvent;
+        StringBuilder LastEvent;
+        string LastFullEvent;
 
         public Simulator() {
             InitializeComponent();
@@ -40,7 +41,8 @@ namespace Matchmaker {
                 Playerbase.Add(new SimulatedPlayer());
             Queue = new SimulatedQueue();
             SimulatedTime = 0;
-            LastFullEvent = LastEvent = string.Empty;
+            LastEvent = null;
+            LastFullEvent = string.Empty;
             SimulatorPanel.Enabled = true;
             UpdateDistribution();
             Distribution.Visible = true;
@@ -77,9 +79,9 @@ namespace Matchmaker {
         }
 
         void SimulatorTick(object sender, EventArgs e) {
-            if (LastEvent.Length != 0) {
-                LastFullEvent = LastEvent;
-                LastEvent = string.Empty;
+            if (LastEvent != null) {
+                LastFullEvent = LastEvent.ToString().TrimEnd();
+                LastEvent = null;
                 UpdateDistribution();
             }
             StringBuilder Display = new StringBuilder();
@@ -102,10 +104,10 @@ namespace Matchmaker {
             SimulatedTime += Tick;
             for (int i = 0, c = Playerbase.Count; i < c; ++i)
                 Playerbase[i].QueueSimulation(Queue, Tick);
-            Queue.SimulatorTick(Tick);
+            Queue.Tick(Tick);
             lock (Queue.ResultLock) {
                 if (Queue.Result.Length != 0)
-                    LastEvent = Queue.Result.ToString().TrimEnd();
+                    LastEvent = Queue.Result;
                 Queue.Result = new StringBuilder();
             }
             TimerLockFix = false;

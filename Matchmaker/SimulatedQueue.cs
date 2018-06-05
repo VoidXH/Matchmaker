@@ -8,7 +8,7 @@ namespace Matchmaker {
     public class SimulatedQueue : Queue {
         /// <summary>Skill rating distribution.</summary>
         public int SkillRange = 5000;
-        public int PlayersPerTeam = 6;
+
         /// <summary>All output is written here. Clear this when you want, but don't let it eat all your RAM.</summary>
         public StringBuilder Result = new StringBuilder();
 
@@ -16,8 +16,11 @@ namespace Matchmaker {
 
         public int MatchesPlayed { get; private set; } = 0;
 
-        public SimulatedQueue() {
+        public int PlayersPerTeam { get; private set; }
+
+        public SimulatedQueue(int PlayersPerTeam = 6) {
             OnMatchMade += StartMatchSimulation;
+            PlayersNeeded = (this.PlayersPerTeam = PlayersPerTeam) * 2;
         }
 
         void LogPlayer(SimulatedPlayer SPlayer, float Contribution, bool Winner) {
@@ -85,11 +88,6 @@ namespace Matchmaker {
                 List<Player> MatchPlayers = Players;
                 SimulateMatch(MatchPlayers);
             });
-        }
-
-        public void SimulatorTick(float DeltaTime) {
-            PlayersNeeded = PlayersPerTeam * 2;
-            Tick(DeltaTime);
         }
     }
 }
