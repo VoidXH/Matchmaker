@@ -1,6 +1,7 @@
 ﻿using MatchmakerEngine;
 using System;
 using System.Collections.Generic;
+using System.Drawing;
 using System.Text;
 using System.Windows.Forms;
 using System.Windows.Forms.DataVisualization.Charting;
@@ -46,9 +47,8 @@ namespace Matchmaker {
             Distribution.Series.Clear();
             Series Plot = new Series {
                 ChartType = SeriesChartType.BoxPlot,
-                Color = System.Drawing.Color.Red,
+                Color = Color.Red,
                 IsValueShownAsLabel = false,
-                IsVisibleInLegend = false,
                 IsXValueIndexed = true
             };
             Distribution.Series.Add(Plot);
