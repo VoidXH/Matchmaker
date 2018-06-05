@@ -1,7 +1,5 @@
-﻿using System.Collections.Generic;
-
-namespace MatchmakerEngine {
-    public class Player {
+﻿namespace MatchmakerEngine {
+    public abstract class Player {
         /// <summary>Gained rating in a completely fair match for average contribution.</summary>
         public static float MedianGain = .005f;
         /// <summary>New players have this level of skill. Should be lower than the average, as they usually don't have average skills.</summary>
@@ -15,21 +13,12 @@ namespace MatchmakerEngine {
         /// <summary>Maximum rating difference while queueing near this player, based on time in queue.</summary>
         internal float QueueRange;
 
-        public enum Results { Win, Draw, Loss }
-
-        public enum MatchTypes {
-            /// <summary>Not ranked matches, but balance by the player's current mood is needed.</summary>
-            LowStakes,
-            /// <summary>The average ranked match.</summary>
-            HighStakes,
-            /// <summary>Ranked matches to determine the player's skill level faster.</summary>
-            Placement
-        }
-
+        /// <summary>Constructor for players with no available data.</summary>
         public Player() {
             SkillRating = MatchmakingRating = RedistributionCenter;
         }
 
+        /// <summary>Constructor for players with available skill records.</summary>
         public Player(float SkillRating, float MatchmakingRating) {
             this.SkillRating = SkillRating;
             this.MatchmakingRating = MatchmakingRating;

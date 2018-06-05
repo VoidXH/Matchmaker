@@ -18,7 +18,7 @@ namespace Matchmaker {
         }
 
         void EvaluatePlayer(SimulatedPlayer SPlayer, float TeamSkill, float OpponentSkill, float Contribution, bool Winner) {
-            SPlayer.Evaluate(TeamSkill, OpponentSkill, Contribution, Winner ? Player.Results.Win : Player.Results.Loss);
+            SPlayer.Evaluate(TeamSkill, OpponentSkill, Contribution, Winner ? Results.Win : Results.Loss);
             Result.Append(SPlayer.Name).AppendLine(": ");
             int NewSkill = (int)(SPlayer.SkillRating * SkillRange);
             Result.Append(SPlayer.SkillBeforeMatch).Append(" -> ").Append(NewSkill).Append(" (");

@@ -46,7 +46,7 @@ namespace Matchmaker {
         void UpdateDistribution() {
             Distribution.Series.Clear();
             Series Plot = new Series {
-                ChartType = SeriesChartType.BoxPlot,
+                ChartType = SeriesChartType.Candlestick,
                 Color = Color.Red,
                 IsValueShownAsLabel = false,
                 IsXValueIndexed = true
