@@ -31,30 +31,26 @@ namespace Matchmaker {
             Result.Append("New MMR: ").AppendLine(((int)(SPlayer.MatchmakingRating * SkillRange)).ToString()).AppendLine();
         }
 
+        /// <summary>Evaluate a match with random winners and contributions.</summary>
+        /// <param name="Players">Players found to play by the matchmaker</param>
         void SimulateMatch(List<Player> Players) {
-            // Separate players the closest way to equal.
-            List<Player> WinningTeam = new List<Player>(), LosingTeam = new List<Player>(); // Pick a random winner for the simulation.
-            float WinnerSkill = 0, LoserSkill = 0;
-            for (int i = Players.Count - 1; i >= 0; --i) { // The player list given by the Queue is in ascending order.
-                if ((WinnerSkill < LoserSkill || LosingTeam.Count == PlayersPerTeam) && WinningTeam.Count != PlayersPerTeam) {
-                    WinningTeam.Add(Players[i]);
-                    WinnerSkill += Players[i].MatchmakingRating;
-                } else {
-                    LosingTeam.Add(Players[i]);
-                    LoserSkill += Players[i].MatchmakingRating;
-                }
+            for (int i = 0, c = Players.Count; i < c; ++i)
                 ((SimulatedPlayer)Players[i]).SkillBeforeMatch = (int)(Players[i].SkillRating * SkillRange);
+            List<Player>[] Teams = DistributeTeams(Players, 2);
+            float WinnerSkill = 0, LoserSkill = 0;
+            for (int i = 0; i < PlayersPerTeam; ++i) {
+                WinnerSkill += Teams[0][i].MatchmakingRating; // Team 0 is randomly the winner.
+                LoserSkill += Teams[1][i].MatchmakingRating; // Team 0 is randomly the winner.
             }
-            // Evaluate the team with random contributions.
             Random Rand = new Random((int)DateTime.Now.Ticks);
             Result.AppendLine("New match --------------------");
             WinnerSkill /= PlayersPerTeam;
             LoserSkill /= PlayersPerTeam;
             for (int i = 0; i < PlayersPerTeam; ++i) {
-                EvaluatePlayer((SimulatedPlayer)WinningTeam[i], WinnerSkill, LoserSkill,
-                    Mathf.Clamp01(((SimulatedPlayer)WinningTeam[i]).ActualSkill / WinnerSkill * .5f + (float)Rand.NextDouble() * .1f - .05f), true);
-                EvaluatePlayer((SimulatedPlayer)LosingTeam[i], LoserSkill, WinnerSkill,
-                    Mathf.Clamp01(((SimulatedPlayer)LosingTeam[i]).ActualSkill / LoserSkill * .5f + (float)Rand.NextDouble() * .1f - .05f), false);
+                EvaluatePlayer((SimulatedPlayer)Teams[0][i], WinnerSkill, LoserSkill,
+                    Mathf.Clamp01(((SimulatedPlayer)Teams[0][i]).ActualSkill / WinnerSkill * .5f + (float)Rand.NextDouble() * .1f - .05f), true);
+                EvaluatePlayer((SimulatedPlayer)Teams[1][i], LoserSkill, WinnerSkill,
+                    Mathf.Clamp01(((SimulatedPlayer)Teams[1][i]).ActualSkill / LoserSkill * .5f + (float)Rand.NextDouble() * .1f - .05f), false);
             }
             ++MatchesPlayed;
         }

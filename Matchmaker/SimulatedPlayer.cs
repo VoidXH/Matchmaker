@@ -1,6 +1,5 @@
 ﻿using MatchmakerEngine;
 using System;
-using System.Collections.Generic;
 
 namespace Matchmaker {
     public class SimulatedPlayer : Player {

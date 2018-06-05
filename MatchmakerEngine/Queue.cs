@@ -55,5 +55,31 @@ namespace MatchmakerEngine {
                 }
             }
         }
+
+        /// <summary>Create teams close in skill.</summary>
+        /// <param name="ool">Player pool. No P in the ool.</param>
+        /// <param name="Teams">Number of teams</param>
+        public static List<Player>[] DistributeTeams(List<Player> ool, int Teams) {
+            List<Player>[] MatchedTeams = new List<Player>[Teams];
+            float[] Ratings = new float[Teams];
+            int MaxPerTeam = ool.Count / Teams;
+            if (MaxPerTeam * Teams != ool.Count)
+                ++MaxPerTeam;
+            for (int i = 0; i < Teams; ++i)
+                MatchedTeams[i] = new List<Player>(MaxPerTeam);
+            float PeakRating = 0;
+            foreach (Player p in ool) {
+                for (int i = 0; i < Teams; ++i) {
+                    if (Ratings[i] <= PeakRating && MatchedTeams[i].Count != MaxPerTeam) {
+                        MatchedTeams[i].Add(p);
+                        Ratings[i] += p.MatchmakingRating;
+                        if (PeakRating < Ratings[i])
+                            PeakRating = Ratings[i];
+                        break;
+                    }
+                }
+            }
+            return MatchedTeams;
+        }
     }
 }
