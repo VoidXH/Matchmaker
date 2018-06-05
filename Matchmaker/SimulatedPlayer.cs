@@ -54,8 +54,8 @@ namespace Matchmaker {
             }
         }
 
-        public void Evaluate(List<Player> With, List<Player> Against, float Contribution, Results Result) {
-            Evaluate(With, Against, Contribution, Result, --PlacementMatchesRemaining < 0 ? MatchTypes.HighStakes : MatchTypes.Placement);
+        public void Evaluate(float TeamSkill, float OpponentSkill, float Contribution, Results Result) {
+            Evaluate(TeamSkill, OpponentSkill, Contribution, Result, --PlacementMatchesRemaining < 0 ? MatchTypes.HighStakes : MatchTypes.Placement);
         }
     }
 }

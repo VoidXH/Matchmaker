@@ -36,28 +36,21 @@ namespace MatchmakerEngine {
         }
 
         /// <summary>Handle match results for an individual player and calculate his new ratings.</summary>
-        /// <param name="With">Player's team, including the player</param>
-        /// <param name="Against">All opponents</param>
+        /// <param name="TeamSkill">The players' team's average skill rating, including the player</param>
+        /// <param name="OpponentSkill">All opponents' average skill rating</param>
         /// <param name="Contribution">Individual player performance, [0;1].</param>
         /// <param name="Result">Match outcome</param>
         /// <param name="MatchType">Ranking weight modifier</param>
-        public void Evaluate(List<Player> With, List<Player> Against, float Contribution, Results Result, MatchTypes MatchType) {
-            float WithAvg = 0, AgainstAvg = 0;
-            foreach (Player p in With)
-                WithAvg += p.MatchmakingRating;
-            foreach (Player p in Against)
-                AgainstAvg += p.MatchmakingRating;
-            WithAvg /= With.Count;
-            AgainstAvg /= Against.Count;
+        public void Evaluate(float TeamSkill, float OpponentSkill, float Contribution, Results Result, MatchTypes MatchType) {
             // TODO: Win chance must be a factor for non-team games, but it is not required for teams, as it doesn't change their contribution to their own team.
-            //float WinChance = MMath.Clamp01(AgainstAvg / WithAvg);
+            //float WinChance = MMath.Clamp01(OpponentSkill / TeamSkill);
 
             // Contribution is weighted with skill difference, this has many advantages:
             // - If the player is much more skilled than the team, he'll go up the ranks faster.
             // - If the player deserved this high rank, but has a bad day, deranking will be slower.
             // - If the player constantly fails to deliver an expected contribution for his level, he'll go down fast.
-            if (WithAvg != 0)
-                Contribution = Mathf.Clamp01(MatchmakingRating / WithAvg * Contribution);
+            if (TeamSkill != 0)
+                Contribution = Mathf.Clamp01(MatchmakingRating / TeamSkill * Contribution);
             float TeamContribBonus = Contribution * MedianGain * 2;
             if (Result == Results.Win)
                 SkillRating = Mathf.Clamp01(SkillRating + TeamContribBonus);
